@@ -1,23 +1,27 @@
 import { component$, $, useContext } from "@builder.io/qwik";
-import { AccountCtx } from "~/routes/layout";
+import { AccountCtx } from "~/context/DappContext";
 
 export const LogButton = component$(() => {
     const account = useContext(AccountCtx);
 
     const onLogIn = $(async () => {
         if (account.isConnected === true) { return; }
-
-        await window.aptos.connect();
-        const data = await window.aptos.account();
-        
-        account.address = data.address;
-        account.isConnected = true;
+        try {
+            account.extensionOpened = true;
+            await window.aptos.connect();
+            const data = await window.aptos.account();   
+            account.address = data.address;
+        } finally {
+            account.isConnected = true;
+            account.extensionOpened = false;
+        }
     });
 
     const onLogOut = $(async () => {
         if (account.isConnected === false) { return; }
         await window.aptos.disconnect();
         account.isConnected = false;
+        account.isLoading = false;
         account.address = "0xs0m3th1ng";
     });
 
